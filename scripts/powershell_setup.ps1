@@ -38,7 +38,8 @@ $PSMajorVersion = $PSVersionTable.PSVersion.Major
 if ($PSMajorVersion -lt 7) {
     $binaryString = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($OpenAIApiKey);
     $openAIApiKeyPlainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($binaryString);
-} else {
+}
+else {
     $openAIApiKeyPlainText = ConvertFrom-SecureString -SecureString $OpenAIApiKey -AsPlainText
 }
 
@@ -48,18 +49,20 @@ $enginesApiUri = "https://api.openai.com/v1/engines"
 $response = $null
 try {
     if ($PSMajorVersion -lt 7) {
-        $response = (Invoke-WebRequest -Uri $enginesApiUri -Headers @{"Authorization" = "Bearer $openAIApiKeyPlainText"; "OpenAI-Organization" = "$OpenAIOrganizationId"})
-    } else {
-        $response = (Invoke-WebRequest -Uri $enginesApiUri -Authentication Bearer -Token $OpenAIApiKey -Headers @{"OpenAI-Organization" = "$OpenAIOrganizationId"})
+        $response = (Invoke-WebRequest -Uri $enginesApiUri -Headers @{"Authorization" = "Bearer $openAIApiKeyPlainText"; "OpenAI-Organization" = "$OpenAIOrganizationId" })
     }
-} catch {
+    else {
+        $response = (Invoke-WebRequest -Uri $enginesApiUri -Authentication Bearer -Token $OpenAIApiKey -Headers @{"OpenAI-Organization" = "$OpenAIOrganizationId" })
+    }
+}
+catch {
     $statusCode = $_.Exception.Response.StatusCode.value__
     Write-Error "Failed to access OpenAI api [$statusCode]. Please check your OpenAI API key (https://beta.openai.com/account/api-keys) and Organization ID (https://beta.openai.com/account/org-settings)."
     exit 1
 }
 
 # Check if target engine is available to the user
-if ($null -eq (($response.Content | ConvertFrom-Json).data | Where-Object {$_.id -eq $OpenAIEngineId})) {
+if ($null -eq (($response.Content | ConvertFrom-Json).data | Where-Object { $_.id -eq $OpenAIEngineId })) {
     Write-Error "Cannot find OpenAI engine: $OpenAIEngineId. Please check the OpenAI engine id (https://beta.openai.com/docs/engines/codex-series-private-beta) and your Organization ID (https://beta.openai.com/account/org-settings)."
     exit 1
 }
@@ -69,7 +72,8 @@ if ($null -eq (($response.Content | ConvertFrom-Json).data | Where-Object {$_.id
 # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles
 if (!(Test-Path -Path $PROFILE)) {
     New-Item -Type File -Path $PROFILE -Force 
-} else {
+}
+else {
     # Clean up the content before append new one. This allow users to setup multiple times without running cleanup script
     (Get-Content -Path $PROFILE -Raw) -replace "(?ms)### Codex CLI setup - start.*?### Codex CLI setup - end", "" | Set-Content -Path $PROFILE
     Write-Host "Removed previous setup script from $PROFILE."
