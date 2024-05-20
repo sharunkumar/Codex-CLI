@@ -11,6 +11,7 @@ import psutil
 from pathlib import Path
 from prompt_file import PromptFile
 from commands import get_command_result
+from groq import Groq
 
 MULTI_TURN = "off"
 SHELL = ""
@@ -19,12 +20,13 @@ ENGINE = ''
 TEMPERATURE = 0
 MAX_TOKENS = 300
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # api keys located in the same directory as this file
 API_KEYS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'openaiapirc')
 
 PROMPT_CONTEXT = Path(__file__).with_name('current_context.txt')
+GROQ_API_KEY = ''
 
 
 # Read the secret_key from the ini file ~/.config/openaiapirc
@@ -51,6 +53,7 @@ def initialize():
     Initialize openAI and shell mode
     """
     global ENGINE
+    global GROQ_API_KEY
 
     # Check if file at API_KEYS_LOCATION exists
     create_template_ini_file()
@@ -60,6 +63,7 @@ def initialize():
     openai.api_key = config['openai']['secret_key'].strip('"').strip("'")
     openai.organization = config['openai']['organization_id'].strip('"').strip("'")
     ENGINE = config['openai']['engine'].strip('"').strip("'")
+    GROQ_API_KEY = config['groq']['secret_key'].strip('"').strip("'")
 
     prompt_config = {
         'engine': ENGINE,
@@ -200,20 +204,34 @@ if __name__ == '__main__':
 
         codex_query = prefix + prompt_file.read_prompt_file(user_query) + user_query
 
+        client = Groq(api_key=GROQ_API_KEY)
+
         # get the response from codex
-        response = openai.Completion.create(engine=config['engine'], prompt=codex_query, temperature=config['temperature'], max_tokens=config['max_tokens'], stop="#")
+        # response = openai.Completion.create(engine=config['engine'], prompt=codex_query, temperature=config['temperature'], max_tokens=config['max_tokens'], stop="#")
+        response = client.chat.completions.create(messages=[
+            {
+                "role": "system",
+                "content": "You are a handy cli completion tool. Respond only with the completion of the shell script."
+            },
+            {
+                "role": "user",
+                "content": codex_query
+            }
+        ], model='llama3-70b-8192')
 
-        completion_all = response['choices'][0]['text']
+        completion_all = response.choices[0].message.content
 
-        if is_sensitive_content(user_query + '\n' + completion_all):
-            print("\n#   Sensitive content detected, response has been redacted")
-        else:
-            print(completion_all)
+        print(completion_all)
 
-            # append output to prompt context file
-            if config['multi_turn'] == "on":
-                if completion_all != "" or len(completion_all) > 0:
-                    prompt_file.add_input_output_pair(user_query, completion_all)
+        # if is_sensitive_content(user_query + '\n' + completion_all):
+        #     print("\n#   Sensitive content detected, response has been redacted")
+        # else:
+        #     print(completion_all)
+
+        #     # append output to prompt context file
+        #     if config['multi_turn'] == "on":
+        #         if completion_all != "" or len(completion_all) > 0:
+        #             prompt_file.add_input_output_pair(user_query, completion_all)
         
     except FileNotFoundError:
         print('\n\n# Codex CLI error: Prompt file not found, try again')
