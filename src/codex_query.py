@@ -160,10 +160,15 @@ def detect_shell():
     global SHELL
     global PROMPT_CONTEXT
 
-    parent_process_name = psutil.Process(os.getppid()).name()
-    POWERSHELL_MODE = bool(re.fullmatch('pwsh|pwsh.exe|powershell.exe' + 'python|python.exe' if DEBUG_MODE else '', parent_process_name))
-    BASH_MODE = bool(re.fullmatch('bash|bash.exe', parent_process_name))
-    ZSH_MODE = bool(re.fullmatch('zsh|zsh.exe', parent_process_name))
+    parent_process = psutil.Process(os.getppid())
+
+    while "python" in parent_process.name():
+        parent_process = parent_process.parent()
+
+    parent_process_name = parent_process.name()
+    POWERSHELL_MODE = parent_process_name in ['pwsh','pwsh.exe','powershell.exe']
+    BASH_MODE = parent_process_name in ['bash','bash.exe']
+    ZSH_MODE = parent_process_name in ['zsh','zsh.exe']
 
     SHELL = "powershell" if POWERSHELL_MODE else "bash" if BASH_MODE else "zsh" if ZSH_MODE else "unknown"
 
@@ -191,16 +196,16 @@ if __name__ == '__main__':
         # use query prefix to prime Codex for correct scripting language
         prefix = ""
         # prime codex for the corresponding shell type
-        if config['shell'] == "zsh":
+        if SHELL == "zsh":
             prefix = '#!/bin/zsh\n\n'
-        elif config['shell'] == "bash":
+        elif SHELL == "bash":
             prefix = '#!/bin/bash\n\n'
-        elif config['shell'] == "powershell":
+        elif SHELL == "powershell":
             prefix = '<# powershell #>\n\n'
-        elif config['shell'] == "unknown":
+        elif SHELL == "unknown":
             print("\n#\tUnsupported shell type, please use # set shell <shell>")
         else:
-            prefix = '#' + config['shell'] + '\n\n'
+            prefix = '#' + SHELL + '\n\n'
 
         codex_query = prefix + prompt_file.read_prompt_file(user_query) + user_query
 
@@ -221,7 +226,7 @@ if __name__ == '__main__':
 
         completion_all = response.choices[0].message.content
 
-        print(completion_all)
+        print(completion_all + '\n\n')
 
         # if is_sensitive_content(user_query + '\n' + completion_all):
         #     print("\n#   Sensitive content detected, response has been redacted")
