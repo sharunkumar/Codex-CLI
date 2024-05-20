@@ -157,7 +157,7 @@ def detect_shell():
     global PROMPT_CONTEXT
 
     parent_process_name = psutil.Process(os.getppid()).name()
-    POWERSHELL_MODE = bool(re.fullmatch('pwsh|pwsh.exe|powershell.exe', parent_process_name))
+    POWERSHELL_MODE = bool(re.fullmatch('pwsh|pwsh.exe|powershell.exe' + 'python|python.exe' if DEBUG_MODE else '', parent_process_name))
     BASH_MODE = bool(re.fullmatch('bash|bash.exe', parent_process_name))
     ZSH_MODE = bool(re.fullmatch('zsh|zsh.exe', parent_process_name))
 
