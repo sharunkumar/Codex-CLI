@@ -197,17 +197,17 @@ if __name__ == '__main__':
         prefix = ""
         # prime codex for the corresponding shell type
         if SHELL == "zsh":
-            prefix = '#!/bin/zsh\n\n'
+            prefix = '#!/bin/zsh'
         elif SHELL == "bash":
-            prefix = '#!/bin/bash\n\n'
+            prefix = '#!/bin/bash'
         elif SHELL == "powershell":
-            prefix = '<# powershell #>\n\n'
+            prefix = '<# powershell #>'
         elif SHELL == "unknown":
             print("\n#\tUnsupported shell type, please use # set shell <shell>")
         else:
-            prefix = '#' + SHELL + '\n\n'
+            prefix = '#' + SHELL
 
-        codex_query = prefix + prompt_file.read_prompt_file(user_query) + user_query
+        codex_query = '\n\n'.join((prefix, user_query))
 
         client = Groq(api_key=GROQ_API_KEY)
 
