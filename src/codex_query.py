@@ -217,11 +217,11 @@ if __name__ == '__main__':
         
     except FileNotFoundError:
         print('\n\n# Codex CLI error: Prompt file not found, try again')
-    except openai.error.RateLimitError:
+    except openai.RateLimitError:
         print('\n\n# Codex CLI error: Rate limit exceeded, try later')
-    except openai.error.APIConnectionError:
+    except openai.APIConnectionError:
         print('\n\n# Codex CLI error: API connection error, are you connected to the internet?')
-    except openai.error.InvalidRequestError as e:
-        print('\n\n# Codex CLI error: Invalid request - ' + str(e))
+    # except openai.error.InvalidRequestError as e:
+        # print('\n\n# Codex CLI error: Invalid request - ' + str(e))
     except Exception as e:
         print('\n\n# Codex CLI error: Unexpected exception - ' + str(e))
