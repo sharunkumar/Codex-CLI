@@ -12,12 +12,14 @@ class PromptFile:
     default_context_filename = "current_context.txt"
     default_file_path = os.path.join(os.path.dirname(__file__), "..", default_context_filename)
     default_config_path = os.path.join(os.path.dirname(__file__), "..", "current_context.config")
+    config = {}
 
     def __init__(self, file_name, config):
         self.context_source_filename = "{}-context.txt".format(config['shell']) #  feel free to set your own default context path here
         
         self.file_path = self.default_file_path
         self.config_path = self.default_config_path
+        self.config = config
 
         # loading in one of the saved contexts
         if file_name != self.default_context_filename:
